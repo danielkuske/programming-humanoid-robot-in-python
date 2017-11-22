@@ -34,7 +34,7 @@ class PIDController(object):
         self.e1 = np.zeros(size)
         self.e2 = np.zeros(size)
         # ADJUST PARAMETERS BELOW
-        delay = 0
+        delay = 1
         self.Kp = 0
         self.Ki = 0
         self.Kd = 0
@@ -52,10 +52,23 @@ class PIDController(object):
         @param sensor: current values from sensor
         @return control signal
         '''
-        # YOUR CODE HERE
+
+        #predict angle values
+        prediction = self.y[0] + self.u * len(self.y)
+
+        #calculate error and angle velocities u
+        current_error = target - (sensor + prediction - self.y[0])
+        self.u = self.u \
+            + (self.Kp + self.Ki * self.dt + self.Kd / self.dt) * current_error \
+            - (self.Kp + 2 * self.Kd / self.dt) * self.e1 \
+            + (self.Kd / self.dt) * self.e2
+
+        #save values for next iteration
+        self.e2 = self.e1
+        self.e1 = current_error
+        self.y.append(prediction)
 
         return self.u
-
 
 class PIDAgent(SparkAgent):
     def __init__(self, simspark_ip='localhost',
