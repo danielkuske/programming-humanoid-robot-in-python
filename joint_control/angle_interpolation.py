@@ -21,7 +21,7 @@
 
 import numpy as np
 from pid import PIDAgent
-from keyframes import hello
+from keyframes import wipe_forehead
 
 
 class AngleInterpolationAgent(PIDAgent):
@@ -40,15 +40,15 @@ class AngleInterpolationAgent(PIDAgent):
         return super(AngleInterpolationAgent, self).think(perception)
 
     def angle_interpolation(self, keyframes, perception):
+        target_joints = {}
+
         if (self.start_time == -1):
             self.start_time = perception.time
         keyframe_exec_time = perception.time - self.start_time
 
-        target_joints = {}
-        # YOUR CODE HERE
         for i, name in enumerate(keyframes[0]):
             if not name in perception.joint:
-                break
+                continue
 
             time = keyframes[1][i]
             keys = keyframes[2][i]
@@ -61,7 +61,7 @@ class AngleInterpolationAgent(PIDAgent):
                     break
             if j == -1:
                 target_joints[name] = 0
-                break
+                continue
 
             endHandleDTime = keys[j][1][1]
             endHandleDAngle = keys[j][1][2]
@@ -91,6 +91,7 @@ class AngleInterpolationAgent(PIDAgent):
                                                       bezierEnd[1],
                                                       root)
 
+            #print name + ':' + str(target_angle)
             target_joints[name] = target_angle
 
         return target_joints
@@ -101,14 +102,17 @@ class AngleInterpolationAgent(PIDAgent):
                                  3 * x0 - 6 * x1 + 3 * x2,
                                - 3 * x0 + 3 * x1,
                                 -t + x0])
-        #for r in roots:
-        #    if np.isreal(r) and 0 <= np.real(r) <= 1:
-        #        print np.real(r)
-        #print '-------'
+        i = []
+        for r in roots:
+            if np.isreal(r) and 0 <= np.real(r) <= 1:
+                i.append(r)
+        if len(i) > 1:
+            print 'shiiit too many'
+            print(i)
         for r in roots:
             if np.isreal(r) and 0 <= np.real(r) <= 1:
                 return np.real(r)
-        print 'shiiiiiit'
+        print 'shiiit not enough'
         return 0
 
     @staticmethod
@@ -121,5 +125,5 @@ class AngleInterpolationAgent(PIDAgent):
 
 if __name__ == '__main__':
     agent = AngleInterpolationAgent()
-    agent.keyframes = hello()  # CHANGE DIFFERENT KEYFRAMES
+    agent.keyframes = wipe_forehead(0)  # CHANGE DIFFERENT KEYFRAMES
     agent.run()

@@ -35,9 +35,9 @@ class PIDController(object):
         self.e2 = np.zeros(size)
         # ADJUST PARAMETERS BELOW
         delay = 1
-        self.Kp = 30
-        self.Ki = 1
-        self.Kd = 0
+        self.Kp = 20
+        self.Ki = 0.6
+        self.Kd = 0.5
         self.y = deque(np.zeros(size), maxlen=1)
 
     def set_delay(self, delay):
@@ -57,7 +57,7 @@ class PIDController(object):
         prediction = self.y[0] + self.u * self.dt
 
         #TODO calculate error
-        current_error = target - (sensor + prediction - self.y[0])
+        #current_error = target - (sensor + prediction - self.y[0])
 
         current_error = target - sensor
         # calculate angle velocities u
