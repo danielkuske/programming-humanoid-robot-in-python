@@ -19,7 +19,7 @@
     # preceding the point, the second describes the curve following the point.
 '''
 
-
+import numpy as np
 from pid import PIDAgent
 from keyframes import hello
 
@@ -32,6 +32,7 @@ class AngleInterpolationAgent(PIDAgent):
                  sync_mode=True):
         super(AngleInterpolationAgent, self).__init__(simspark_ip, simspark_port, teamname, player_id, sync_mode)
         self.keyframes = ([], [], [])
+        self.start_time = -1
 
     def think(self, perception):
         target_joints = self.angle_interpolation(self.keyframes, perception)
@@ -39,33 +40,84 @@ class AngleInterpolationAgent(PIDAgent):
         return super(AngleInterpolationAgent, self).think(perception)
 
     def angle_interpolation(self, keyframes, perception):
+        if (self.start_time == -1):
+            self.start_time = perception.time
+        keyframe_exec_time = perception.time - self.start_time
+
         target_joints = {}
         # YOUR CODE HERE
-        n = len(keyframes.names)
-        for i in xrange(0, n-1):
-            name = keyframes.names[i]
-            time = keyframes.times[i]
-            keys = keyframes.keys[i]
+        for i, name in enumerate(keyframes[0]):
+            if not name in perception.joint:
+                break
+
+            time = keyframes[1][i]
+            keys = keyframes[2][i]
 
             #find right key:
-            j = 0
+            j = -1
             for index, t in enumerate(time):
-                if (t > perception.time):
+                if (t > keyframe_exec_time):
                     j = index
                     break
-            bezierStartPoint = keys[j-1]
-            bezierEndPoint = keys[j]
+            if j == -1:
+                target_joints[name] = 0
+                break
 
+            endHandleDTime = keys[j][1][1]
+            endHandleDAngle = keys[j][1][2]
+            bezierEnd = (time[j], keys[j][0])
+            bezierEndHandle =  np.add(bezierEnd, (endHandleDTime, endHandleDAngle))
 
+            if (j > 0):
+                startHandleDTime =  keys[j-1][2][1]
+                startHandleDAngle = keys[j-1][2][2]
+                bezierStart = (time[j-1], keys[j-1][0])
+                bezierStartHandle =  np.add(bezierStart, (startHandleDTime, startHandleDAngle))
+            else:
+                startHandleDTime = - endHandleDTime
+                startHandleDAngle = 0
+                bezierStart = (0, perception.joint[name])
+                bezierStartHandle = np.add(bezierStart, (startHandleDTime, startHandleDAngle))
 
-        #( (1 - t ) ( (1 - t ) ( (1 - t )x_0 + tx_1 )+t ( (
-        #    1 - t )x_1 + tx_2 ) )+t ( (1 - t ) ( (
-        #    1 - t )x_1 + tx_2 )+t ( (1 - t )x_2 + tx_3 ) ),  (
-        #    1 - t ) ( (1 - t ) ( (1 - t )y_0 + ty_1 )+t ( (
-        #    1 - t )y_1 + ty_2 ) )+t ( (1 - t ) ( (
-        #    1 - t )y_1 + ty_2 )+t ( (1 - t )y_2 + ty_3 ) ) )
+            root = self.root_of_bezier_polynomial(bezierStart[0],
+                                             bezierStartHandle[0],
+                                             bezierEndHandle[0],
+                                             bezierEnd[0],
+                                             keyframe_exec_time)
+
+            target_angle = self.value_of_bezier_polynomial(bezierStart[1],
+                                                      bezierStartHandle[1],
+                                                      bezierEndHandle[1],
+                                                      bezierEnd[1],
+                                                      root)
+
+            target_joints[name] = target_angle
 
         return target_joints
+
+    @staticmethod
+    def root_of_bezier_polynomial(x0, x1, x2, x3, t):
+        roots = np.roots([-   x0 + 3 * x1 - 3 * x2 + x3,
+                                 3 * x0 - 6 * x1 + 3 * x2,
+                               - 3 * x0 + 3 * x1,
+                                -t + x0])
+        #for r in roots:
+        #    if np.isreal(r) and 0 <= np.real(r) <= 1:
+        #        print np.real(r)
+        #print '-------'
+        for r in roots:
+            if np.isreal(r) and 0 <= np.real(r) <= 1:
+                return np.real(r)
+        print 'shiiiiiit'
+        return 0
+
+    @staticmethod
+    def value_of_bezier_polynomial(x0, x1, x2, x3, val):
+        return np.polyval([-     x0 + 3 * x1 - 3 * x2 + x3,
+                             3 * x0 - 6 * x1 + 3 * x2,
+                           - 3 * x0 + 3 * x1,
+                                 x0],
+                          val)
 
 if __name__ == '__main__':
     agent = AngleInterpolationAgent()
