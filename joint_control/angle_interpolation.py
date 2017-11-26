@@ -21,7 +21,7 @@
 
 import numpy as np
 from pid import PIDAgent
-from keyframes import wipe_forehead
+from keyframes import hello
 
 
 class AngleInterpolationAgent(PIDAgent):
@@ -79,17 +79,19 @@ class AngleInterpolationAgent(PIDAgent):
                 bezierStart = (0, perception.joint[name])
                 bezierStartHandle = np.add(bezierStart, (startHandleDTime, startHandleDAngle))
 
-            root = self.root_of_bezier_polynomial(bezierStart[0],
-                                             bezierStartHandle[0],
-                                             bezierEndHandle[0],
-                                             bezierEnd[0],
-                                             keyframe_exec_time)
+            root = self.root_of_bezier_polynomial(
+                bezierStart[0],
+                bezierStartHandle[0],
+                bezierEndHandle[0],
+                bezierEnd[0],
+                keyframe_exec_time)
 
-            target_angle = self.value_of_bezier_polynomial(bezierStart[1],
-                                                      bezierStartHandle[1],
-                                                      bezierEndHandle[1],
-                                                      bezierEnd[1],
-                                                      root)
+            target_angle = self.value_of_bezier_polynomial(
+                bezierStart[1],
+                bezierStartHandle[1],
+                bezierEndHandle[1],
+                bezierEnd[1],
+                root)
 
             #print name + ':' + str(target_angle)
             target_joints[name] = target_angle
@@ -125,5 +127,5 @@ class AngleInterpolationAgent(PIDAgent):
 
 if __name__ == '__main__':
     agent = AngleInterpolationAgent()
-    agent.keyframes = wipe_forehead(0)  # CHANGE DIFFERENT KEYFRAMES
+    agent.keyframes = hello()  # CHANGE DIFFERENT KEYFRAMES
     agent.run()

@@ -53,23 +53,21 @@ class PIDController(object):
         @return control signal
         '''
 
-        #TODO predict angle values
-        prediction = self.y[0] + self.u * self.dt
+        prediction = (sensor - self.y[0]) / len(self.y) + sensor
+        self.y.append(sensor)
 
-        #TODO calculate error
-        #current_error = target - (sensor + prediction - self.y[0])
+        next_error = target - prediction # - ?
+        self.e1 = self.e1 - sensor # don't rely on the predicted error, take the measured error. (e1 stores old target values)
 
-        current_error = target - sensor
         # calculate angle velocities u
         self.u = self.u \
-            + (self.Kp + self.Ki * self.dt + self.Kd / self.dt) * current_error \
+            + (self.Kp + self.Ki * self.dt + self.Kd / self.dt) * next_error \
             - (self.Kp + 2 * self.Kd / self.dt) * self.e1 \
             + (self.Kd / self.dt) * self.e2
 
         #save values for next iteration
         self.e2 = self.e1
-        self.e1 = current_error
-        self.y.append(prediction)
+        self.e1 = target
 
         return self.u
 
