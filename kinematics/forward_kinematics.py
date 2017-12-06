@@ -20,7 +20,8 @@ import os
 import sys
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'joint_control'))
 
-from numpy.matlib import matrix, identity, dot, transpose
+from numpy.matlib import matrix, identity, dot, transpose, array
+from numpy.linalg import norm
 from math import cos, sin
 from angle_interpolation import AngleInterpolationAgent
 
@@ -82,40 +83,15 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
         '''
         R = identity(3)
         if "LHipYawPitch" in joint_name:
-            R[0,0] = cos(joint_angle)
-            R[1,0] =-sin(joint_angle)
-            R[2,0] =-sin(joint_angle)
-            R[0,1] = sin(joint_angle)
-            R[1,1] = 1
-            R[2,1] = cos(joint_angle) -1
-            R[0,2] = sin(joint_angle)
-            R[1,2] = cos(joint_angle) -1
-            R[2,2] = 1
+            R = self.calculate_rotation_matrix(joint_angle, array([0,1,-1]))
         elif "RHipYawPitch" in joint_name:
-            R[0,0] = cos(joint_angle)
-            R[1,0] =-sin(joint_angle)
-            R[2,0] = sin(joint_angle)
-            R[0,1] = sin(joint_angle)
-            R[1,1] = 1
-            R[2,1] =-cos(joint_angle) +1
-            R[0,2] =-sin(joint_angle)
-            R[1,2] =-cos(joint_angle) +1
-            R[2,2] = 1
+            R = self.calculate_rotation_matrix(-joint_angle, array([0,-1,-1]))
         elif ("Yaw" in joint_name and not "Elbow" in joint_name) or "ShoulderRoll" in joint_name or "ElbowRoll" in joint_name:
-            R[0,0] = cos(joint_angle)
-            R[1,0] = sin(joint_angle)
-            R[0,1] =-sin(joint_angle)
-            R[1,1] = cos(joint_angle)
+            R = self.calculate_rotation_matrix(joint_angle, array([0,0,1]))
         elif "Roll" in joint_name or "Yaw" in joint_name:
-            R[1,1] = cos(joint_angle)
-            R[2,1] = sin(joint_angle)
-            R[1,2] =-sin(joint_angle)
-            R[2,2] = cos(joint_angle)
+            R = self.calculate_rotation_matrix(joint_angle, array([1,0,0]))
         elif "Pitch" in joint_name:
-            R[0,0] = cos(joint_angle)
-            R[2,0] =-sin(joint_angle)
-            R[0,2] = sin(joint_angle)
-            R[2,2] = cos(joint_angle)
+            R = self.calculate_rotation_matrix(joint_angle, array([0,1,0]))
 
         T = identity(4)
         T[0, 3] = self.offsets[joint_name][0]
@@ -123,6 +99,18 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
         T[2, 3] = self.offsets[joint_name][2]
         T[0:3, 0:3] = R
         return T
+
+    def calculate_rotation_matrix(self, angle, u):
+        u = u / norm(u)
+        x = u[0]
+        y = u[1]
+        z = u[2]
+        c = cos(angle)
+        s = sin(angle)
+        return matrix(
+            [[x*x*(1-c)+c,   x*y*(1-c)-z*s, x*z*(1-c)+y*s],
+             [y*x*(1-c)+z*s, y*y*(1-c)+c,   y*z*(1-c)-x*s],
+             [z*x*(1-c)-y*s, z*y*(1-c)+x*s, z*z*(1-c)+c]])
 
     def forward_kinematics(self, joints):
         '''forward kinematics

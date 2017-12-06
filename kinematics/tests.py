@@ -26,7 +26,7 @@ class Tests(unittest.TestCase):
             Y = np.matrix([[c, -s, 0], [s, c, 0], [0, 0, 1]])
             RotExp = np.dot(Y, np.dot(P, R))
             self.assertTrue(np.allclose(RotExp, RotM),
-                            key + ': expected not equals calculated\n' + str(np.round(RotExp, 2)) + '\n' + str(np.round(RotM, 2)) + '\n' + str(self.rotationMatrixToEulerAngles(RotM)))
+                            key + ': expected not equals calculated\n' + str(np.round(RotExp, 2)) + '\n' + str(np.round(RotM, 2)) + '\n' + str(self.rotationMatrixToEulerAngles(RotM) / (2*pi)))
 
             #test position
             values = [M[0,3], M[1,3], M[2,3]]
@@ -98,7 +98,7 @@ class Tests(unittest.TestCase):
         M_2 = np.dot(Y, np.dot(P, R))
         self.assertTrue(np.allclose(M_1, M_2),
                         '\n' + str(M_1) + 'not equals\n' + str(M_2))
-
+        pass
 
     def test_default_values(self):
         angles = {'HeadYaw' : 0,
@@ -198,6 +198,47 @@ class Tests(unittest.TestCase):
                            'LShoulderRoll': [0, 98, 100, pi / 2, pi / 4, pi / 2],
                            'LElbowYaw': [0, 98 + 15 * cos(-pi / 4) - 105 * sin(-pi / 4), 100 - 15 * sin(-pi / 4) - 105 * cos(-pi / 4), 0, pi / 4, pi / 2],
                            'LWristYaw': [55.95, 98 + 15 * cos(-pi / 4) - 105 * sin(-pi / 4), 100 - 15 * sin(-pi / 4) - 105 * cos(-pi / 4), -pi/4, 0, 0]
+                           }
+        self.all_chains(angles, expected_values)
+        pass
+
+    def test_leg_values(self):
+        angles = {'HeadYaw' : 0,
+                  'HeadPitch' : 0,
+                  'LShoulderPitch' : 0,
+                  'LShoulderRoll' : 0,
+                  'LElbowYaw' : 0,
+                  'LElbowRoll' : 0,
+                  'LWristYaw' : 0,
+                  'LHipYawPitch' : -pi/2,
+                  'LHipRoll' : pi/4,
+                  'LHipPitch' : -pi/4,
+                  'LKneePitch' : pi/2,
+                  'LAnklePitch' : pi/4,
+                  'LAnkleRoll' : pi/2,
+                  'RShoulderPitch' : 0,
+                  'RShoulderRoll' : 0,
+                  'RElbowYaw' : 0,
+                  'RElbowRoll' : 0,
+                  'RWristYaw' : 0,
+                  'RHipYawPitch' : -pi/2,
+                  'RHipRoll' : -pi/4,
+                  'RHipPitch' : -pi/4,
+                  'RKneePitch' : pi/2,
+                  'RAnklePitch' : pi/4,
+                  'RAnkleRoll' : -pi/2,}
+        expected_values = {'LHipYawPitch': [0, 50, -85, -pi/4, -pi/4, pi/2],
+                           'LHipRoll': [0, 50, -85, 0, -pi/4, pi/2],
+                           'LHipPitch': [0, 50, -85, 0, -pi/2, pi/2],
+                           'LKneePitch': [0, 150, -85, 0, 0, pi/2],
+                           'LAnklePitch': [0, 150, -85-102.9, 0, pi/4, pi/2],
+                           'LAnkleRoll': [0, 150, -85-102.9, pi/2, pi/4, pi/2],
+                           'RHipYawPitch': [0, -50, -85, pi / 4, -pi / 4, -pi / 2],
+                           'RHipRoll': [0, -50, -85, 0, -pi / 4, -pi / 2],
+                           'RHipPitch': [0, -50, -85, 0, -pi / 2, -pi / 2],
+                           'RKneePitch': [0, -150, -85, 0, 0, -pi / 2],
+                           'RAnklePitch': [0, -150, -85 - 102.9, 0, pi / 4, -pi / 2],
+                           'RAnkleRoll': [0, -150, -85 - 102.9, -pi / 2, pi / 4, -pi / 2],
                            }
         self.all_chains(angles, expected_values)
         pass
