@@ -1,8 +1,10 @@
 
 import numpy as np
 from math import pi, sqrt, atan2, cos, sin
+import random
 import unittest
 from forward_kinematics import ForwardKinematicsAgent
+from inverse_kinematics import InverseKinematicsAgent
 
 
 class Tests(unittest.TestCase):
@@ -256,6 +258,81 @@ class Tests(unittest.TestCase):
             z = 0
 
         return np.array([x, y, z])
+
+
+
+    def test_inverse_kinematics(self):
+
+        agent = InverseKinematicsAgent()
+
+        hip = float(random.randrange(-65, 42))
+        values = {
+            'HeadYaw': float(random.randrange(-119, 119)),
+            'HeadPitch': float(random.randrange(-38, 29)),
+
+            'LShoulderPitch': float(random.randrange(-119, 119)),
+            'LShoulderRoll': float(random.randrange(-18, 76)),
+            'LElbowYaw': float(random.randrange(-119, 119)),
+            'LElbowRoll': float(random.randrange(-88, -2)),
+            'LWristYaw': float(random.randrange(-104, 104)),
+
+            'RShoulderPitch': float(random.randrange(-119, 119)),
+            'RShoulderRoll': float(random.randrange(-76, 18)),
+            'RElbowYaw': float(random.randrange(-119, 119)),
+            'RElbowRoll': float(random.randrange(2, 88)),
+            'RWristYaw': float(random.randrange(-104, 104)),
+
+            'LHipYawPitch': -pi / 2,
+            'LHipRoll': pi / 4,
+            'LHipPitch': -pi / 4,
+            'LKneePitch': pi / 2,
+            'LAnklePitch': pi / 4,
+            'LAnkleRoll': pi / 2,
+            #'LHipYawPitch': hip,
+            #'LHipRoll': float(random.randrange(-21, 45)),
+            #'LHipPitch': float(random.randrange(-88, 27)),
+            #'LKneePitch': float(random.randrange(-5, 121)),
+            #'LAnklePitch': float(random.randrange(-68, 52)),
+            #'LAnkleRoll': float(random.randrange(-22, 44)),
+
+            'RHipYawPitch': hip,
+            'RHipRoll': float(random.randrange(-45, 21)),
+            'RHipPitch': float(random.randrange(-88, 27)),
+            'RKneePitch': float(random.randrange(-5, 121)),
+            'RAnklePitch': float(random.randrange(-68, 52)),
+            'RAnkleRoll': float(random.randrange(-44, 22))
+        }
+
+        agent.forward_kinematics(values)
+        result = agent.inverse_kinematics('LLeg', agent.transforms['LAnkleRoll'])
+
+
+        self.assertTrue(values['HeadYaw'] == result['Head'][0]          , 'HeadYaw failed, expected angle:\n' + str(values['HeadYaw']) + 'result angle:\n' + str(result['Head'][0]))
+        self.assertTrue(values['HeadPitch'] == result['Head'][1]        , 'HeadPitch failed, expected angle:\n' + str(values['HeadPitch']) + 'result angle:\n' + str(result['Head'][1]))
+
+        self.assertTrue(values['LShoulderPitch'] == result['LArm'][0]   , 'LShoulderPitch failed, expected angle:\n' + str(values['LShoulderPitch']) + 'result angle:\n' + str(result['LArm'][0]))
+        self.assertTrue(values['LShoulderRoll'] == result['LArm'][1]    , 'LShoulderRoll failed, expected angle:\n' + str(values['LShoulderRoll']) + 'result angle:\n' + str(result['LArm'][1]))
+        self.assertTrue(values['LElbowYaw'] == result['LArm'][2]        , 'LElbowYaw failed, expected angle:\n' + str(values['LElbowYaw']) + 'result angle:\n' + str(result['LArm'][2]))
+        self.assertTrue(values['LElbowRoll'] == result['LArm'][3]       , 'LElbowRoll failed, expected angle:\n' + str(values['LElbowRoll']) + 'result angle:\n' + str(result['LArm'][3]))
+
+        self.assertTrue(values['RShoulderPitch'] == result['RArm'][0]   , 'RShoulderPitch failed, expected angle:\n' + str(values['RShoulderPitch']) + 'result angle:\n' + str(result['RArm'][0]))
+        self.assertTrue(values['RShoulderRoll'] == result['RArm'][1]    , 'RShoulderRoll failed, expected angle:\n' + str(values['RShoulderRoll']) + 'result angle:\n' + str(result['RArm'][1]))
+        self.assertTrue(values['RElbowYaw'] == result['RArm'][2]        , 'RElbowYaw failed, expected angle:\n' + str(values['RElbowYaw']) + 'result angle:\n' + str(result['RArm'][2]))
+        self.assertTrue(values['RElbowRoll'] == result['RArm'][3]       , 'RElbowRoll failed, expected angle:\n' + str(values['RElbowRoll']) + 'result angle:\n' + str(result['RArm'][3]))
+
+        self.assertTrue(values['LHipYawPitch'] == result['LLeg'][0]     , 'LHipYawPitch failed, expected angle:\n' + str(values['LHipYawPitch']) + 'result angle:\n' + str(result['LLeg'][0]))
+        self.assertTrue(values['LHipRoll'] == result['LLeg'][1]         , 'LHipRoll failed, expected angle:\n' + str(values['LHipRoll']) + 'result angle:\n' + str(result['LLeg'][1]))
+        self.assertTrue(values['LHipPitch'] == result['LLeg'][2]        , 'LHipPitch failed, expected angle:\n' + str(values['LHipPitch']) + 'result angle:\n' + str(result['LLeg'][2]))
+        self.assertTrue(values['LKneePitch'] == result['LLeg'][3]       , 'LKneePitch failed, expected angle:\n' + str(values['LKneePitch']) + 'result angle:\n' + str(result['LLeg'][3]))
+        self.assertTrue(values['LAnklePitch'] == result['LLeg'][4]      , 'LAnklePitch failed, expected angle:\n' + str(values['LAnklePitch']) + 'result angle:\n' + str(result['LLeg'][4]))
+        self.assertTrue(values['LAnkleRoll'] == result['LLeg'][5]       , 'LAnkleRoll failed, expected angle:\n' + str(values['LAnkleRoll']) + 'result angle:\n' + str(result['LLeg'][5]))
+
+        self.assertTrue(values['RHipYawPitch'] == result['RLeg'][0]     , 'RHipYawPitch failed, expected angle:\n' + str(values['RHipYawPitch']) + 'result angle:\n' + str(result['RLeg'][0]))
+        self.assertTrue(values['RHipRoll'] == result['RLeg'][1]         , 'RHipRoll failed, expected angle:\n' + str(values['RHipRoll']) + 'result angle:\n' + str(result['RLeg'][1]))
+        self.assertTrue(values['RHipPitch'] == result['RLeg'][2]        , 'RHipPitch failed, expected angle:\n' + str(values['RHipPitch']) + 'result angle:\n' + str(result['RLeg'][2]))
+        self.assertTrue(values['RKneePitch'] == result['RLeg'][3]       , 'RKneePitch failed, expected angle:\n' + str(values['RKneePitch']) + 'result angle:\n' + str(result['RLeg'][3]))
+        self.assertTrue(values['RAnklePitch'] == result['RLeg'][4]      , 'RAnklePitch failed, expected angle:\n' + str(values['RAnklePitch']) + 'result angle:\n' + str(result['RLeg'][4]))
+        self.assertTrue(values['RAnkleRoll'] == result['RLeg'][5]       , 'RAnkleRoll failed, expected angle:\n' + str(values['RAnkleRoll']) + 'result angle:\n' + str(result['RLeg'][5]))
 
 if __name__ == '__main__':
     unittest.main()
