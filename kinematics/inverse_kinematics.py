@@ -14,7 +14,7 @@ from forward_kinematics import ForwardKinematicsAgent
 from numpy.matlib import identity, array
 from numpy.linalg import norm, inv
 import numpy as np
-from math import cos, sin, atan2, pi, asin, sqrt
+from math import cos, sin, atan2, pi, asin, sqrt, acos, asin
 
 
 class InverseKinematicsAgent(ForwardKinematicsAgent):
@@ -42,59 +42,33 @@ class InverseKinematicsAgent(ForwardKinematicsAgent):
         AnkleRoll = atan2(vFootToHipOrthogonal[1], vFootToHipOrthogonal[2])
         print 'AnkleRoll: ' + str(AnkleRoll)
 
-        #print self.local_trans('LKneePitch', KneePitch)
-        #print self.local_trans('LAnklePitch', AnklePitch)
-        #print self.local_trans('LAnkleRoll', AnkleRoll)
-        mFoot2Thigh = mFoot2Hip\
-            .dot(inv(self.local_trans('LAnkleRoll', AnkleRoll)))\
-            .dot(inv(self.local_trans('LAnklePitch', AnklePitch)))\
-            .dot(inv(self.local_trans('LKneePitch', KneePitch)))
-
-        theMatrix = self.local_trans('LKneePitch', KneePitch)\
+        mFoot2Thigh = self.local_trans('LKneePitch', KneePitch)\
             .dot(self.local_trans('LAnklePitch', AnklePitch))\
-            .dot(self.local_trans('LAnkleRoll', AnkleRoll))\
-            .dot(inv(mFoot2Hip))[0:3,0:3]
-        self.print_matrix(theMatrix, 'The Matrix')
+            .dot(self.local_trans('LAnkleRoll', AnkleRoll))
 
-        mHip2HipOrth = self.calculate_rotation_matrix(pi / 4, [1, 0, 0])
-        mFoot2HipOrth = mHip2HipOrth.dot(mFoot2Hip[0:3,0:3])
+        mHip2HipOrth = identity(4)
+        mHip2HipOrth[0:3,0:3] = self.calculate_rotation_matrix(pi / 4, [1, 0, 0])
 
-        mHipOrthogonal2Foot = inv(mFoot2HipOrth)
+        mHip2Thigh = mFoot2Thigh\
+            .dot(inv(mFoot2Hip))
 
-        mHipOrthogonal2Thigh = mFoot2Thigh[0:3,0:3].dot(mHipOrthogonal2Foot)
+        HipYawPitch = atan2(mHip2Thigh[1,0] * sqrt(2), mHip2Thigh[1,2])
 
-        mHip2ThighReal = self.local_trans('LHipYawPitch', -pi/2)\
-            .dot(self.local_trans('LHipRoll', pi/4))\
-            .dot(self.local_trans('LHipPitch', -pi/4))
-        mHip2Thigh = mHipOrthogonal2Thigh.dot(mHip2HipOrth)
+        M = mHip2Thigh[0:3,0:3].dot(inv(self.calculate_rotation_matrix(HipYawPitch, [0,1,1])))
+
+        HipPitch = atan2(-M[2,0], M[0,0]) -pi
+        HipRoll = atan2(-M[1,2], M[1,1])
+
         self.print_matrix(mHip2Thigh, 'Hip2Thigh')
-        self.print_matrix(mHip2ThighReal[0:3,0:3], 'correct Hip2Thigh')
+        self.print_matrix(inv(mHip2Thigh), 'THigh2Hip')
 
-        #mHipOrthogonal2Thigh1 = mFoot2Thigh[0:3,0:3].dot(inv(rot))
-
-
-        #print np.round(mFoot2Thigh, 1)
-        #print self.rotationMatrixToEulerAngles(mFoot2Thigh[0:3,0:3])
-        print self.rotationMatrixToEulerAngles(mHipOrthogonal2Thigh)
-        HipYaw = atan2(-mHipOrthogonal2Thigh[0,1], mHipOrthogonal2Thigh[1,1])
-        print 'HipYaw: ' + str(HipYaw)
-        HipPitch = atan2(-mHipOrthogonal2Thigh[2,0], mHipOrthogonal2Thigh[2,2])
+        print 'HipYawPitch: ' + str(HipYawPitch)
         print 'HipPitch: ' + str(HipPitch)
-        HipRoll = asin(mHipOrthogonal2Thigh[2,1]) - pi/4
         print 'HipRoll: ' + str(HipRoll)
-        joint_angles = []
 
-        #mThigh2Foot = self.local_trans('LKneePitch', KneePitch)\
-        #    .dot(self.local_trans('LAnklePitch', AnklePitch))\
-        #    .dot(self.local_trans('LAnkleRoll', AnkleRoll))
-        #rotation = identity(4)
-        #rotation[0:3, 0:3] = self.calculate_rotation_matrix(pi/4, [1,0,0])
-        #print rotation
-        #mFoot2HipOrth = rotation.dot(mFoot2Hip)
-        #print np.round(mFoot2HipOrth, 2)
-        #mFoot2HipOrth = inv(mFoot2HipOrth)
-        #print np.round(mFoot2HipOrth, 2)
-        #mHipOrthogonal2Thigh = inv(mThigh2Foot).dot(mFoot2HipOrth)
+
+        joint_angles = [HipYawPitch, HipRoll, HipPitch, KneePitch, AnklePitch, AnkleRoll]
+
         return joint_angles
 
     def rotationMatrixToEulerAngles(self, R):
@@ -112,7 +86,7 @@ class InverseKinematicsAgent(ForwardKinematicsAgent):
         return np.array([x, y, z])
 
     def print_matrix(self, matrix, name):
-        angles = self.rotationMatrixToEulerAngles(matrix)
+        angles = self.rotationMatrixToEulerAngles(matrix[0:3,0:3])
         print '-- ' + name + ': ' + str(np.round(angles, 2)) + ' --'
         print np.round(matrix, 2)
         print '----------------------------------'
