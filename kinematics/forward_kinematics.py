@@ -20,7 +20,7 @@ import os
 import sys
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'joint_control'))
 
-from numpy.matlib import matrix, identity, dot
+from numpy.matlib import matrix, identity, dot, transpose
 from math import cos, sin
 from angle_interpolation import AngleInterpolationAgent
 
@@ -80,45 +80,47 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
         :return: transformation
         :rtype: 4x4 matrix
         '''
-        R = identity(3,3)
+        R = identity(3)
         if "LHipYawPitch" in joint_name:
-            R[0][0] = cos(joint_angle)
-            R[1][0] =-sin(joint_angle)
-            R[2][0] =-sin(joint_angle)
-            R[0][1] = sin(joint_angle)
-            R[1][1] = 1
-            R[2][1] = cos(joint_angle) -1
-            R[0][2] = sin(joint_angle)
-            R[1][2] = cos(joint_angle) -1
-            R[2][2] = 1
-        if "RHipYawPitch" in joint_name:
-            R[0][0] = cos(joint_angle)
-            R[1][0] =-sin(joint_angle)
-            R[2][0] = sin(joint_angle)
-            R[0][1] = sin(joint_angle)
-            R[1][1] = 1
-            R[2][1] =-cos(joint_angle) +1
-            R[0][2] =-sin(joint_angle)
-            R[1][2] =-cos(joint_angle) +1
-            R[2][2] = 1
-        elif "Roll" in joint_name:
-            R[1][1] = cos(joint_angle)
-            R[2][1] = sin(joint_angle)
-            R[1][2] =-sin(joint_angle)
-            R[2][2] = cos(joint_angle)
+            R[0,0] = cos(joint_angle)
+            R[1,0] =-sin(joint_angle)
+            R[2,0] =-sin(joint_angle)
+            R[0,1] = sin(joint_angle)
+            R[1,1] = 1
+            R[2,1] = cos(joint_angle) -1
+            R[0,2] = sin(joint_angle)
+            R[1,2] = cos(joint_angle) -1
+            R[2,2] = 1
+        elif "RHipYawPitch" in joint_name:
+            R[0,0] = cos(joint_angle)
+            R[1,0] =-sin(joint_angle)
+            R[2,0] = sin(joint_angle)
+            R[0,1] = sin(joint_angle)
+            R[1,1] = 1
+            R[2,1] =-cos(joint_angle) +1
+            R[0,2] =-sin(joint_angle)
+            R[1,2] =-cos(joint_angle) +1
+            R[2,2] = 1
+        elif ("Yaw" in joint_name and not "Elbow" in joint_name) or "ShoulderRoll" in joint_name or "ElbowRoll" in joint_name:
+            R[0,0] = cos(joint_angle)
+            R[1,0] = sin(joint_angle)
+            R[0,1] =-sin(joint_angle)
+            R[1,1] = cos(joint_angle)
+        elif "Roll" in joint_name or "Yaw" in joint_name:
+            R[1,1] = cos(joint_angle)
+            R[2,1] = sin(joint_angle)
+            R[1,2] =-sin(joint_angle)
+            R[2,2] = cos(joint_angle)
         elif "Pitch" in joint_name:
-            R[0][0] = cos(joint_angle)
-            R[2][0] =-sin(joint_angle)
-            R[0][2] = sin(joint_angle)
-            R[2][2] = cos(joint_angle)
-        elif "Yaw" in joint_name:
-            R[0][0] = cos(joint_angle)
-            R[1][0] =-sin(joint_angle)
-            R[0][1] = sin(joint_angle)
-            R[1][1] = cos(joint_angle)
+            R[0,0] = cos(joint_angle)
+            R[2,0] =-sin(joint_angle)
+            R[0,2] = sin(joint_angle)
+            R[2,2] = cos(joint_angle)
 
         T = identity(4)
-        T[3, 0:3] = self.offsets[joint_name]
+        T[0, 3] = self.offsets[joint_name][0]
+        T[1, 3] = self.offsets[joint_name][1]
+        T[2, 3] = self.offsets[joint_name][2]
         T[0:3, 0:3] = R
         return T
 
