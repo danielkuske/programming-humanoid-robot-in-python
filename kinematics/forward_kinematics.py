@@ -37,9 +37,9 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
 
         # chains defines the name of chain and joints of the chain
         self.chains = {'Head': ['HeadYaw', 'HeadPitch'],
-                       'LArm': ['LShoulderPitch', 'LShoulderRoll', 'LElbowYaw', 'LElbowRoll', 'LWristYaw'],
+                       'LArm': ['LShoulderPitch', 'LShoulderRoll', 'LElbowYaw', 'LElbowRoll'],
                        'LLeg': ['LHipYawPitch', 'LHipRoll', 'LHipPitch', 'LKneePitch', 'LAnklePitch', 'LAnkleRoll'],
-                       'RArm': ['RShoulderPitch', 'RShoulderRoll', 'RElbowYaw', 'RElbowRoll', 'RWristYaw'],
+                       'RArm': ['RShoulderPitch', 'RShoulderRoll', 'RElbowYaw', 'RElbowRoll'],
                        'RLeg': ['RHipYawPitch', 'RHipRoll', 'RHipPitch', 'RKneePitch', 'RAnklePitch', 'RAnkleRoll']
                        }
 
@@ -49,7 +49,6 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
                         'LShoulderRoll': [0, 0, 0],
                         'LElbowYaw': [105, 15, 0],
                         'LElbowRoll': [0, 0, 0],
-                        'LWristYaw': [55.95, 0, 0],
                         'LHipYawPitch': [0, 50, -85],
                         'LHipRoll': [0, 0, 0],
                         'LHipPitch': [0, 0, 0],
@@ -60,7 +59,6 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
                         'RShoulderRoll': [0, 0, 0],
                         'RElbowYaw': [105, -15, 0],
                         'RElbowRoll': [0, 0, 0],
-                        'RWristYaw': [55.95, 0, 0],
                         'RHipYawPitch': [0, -50, -85],
                         'RHipRoll': [0, 0, 0],
                         'RHipPitch': [0, 0, 0],

@@ -31,16 +31,13 @@ class InverseKinematicsAgent(ForwardKinematicsAgent):
         lLowerLeg = 102.9
         lHipAnkle = norm(vFoot2Hip)
         KneePitch = pi - np.arccos((lUpperLeg*lUpperLeg + lLowerLeg*lLowerLeg - lHipAnkle*lHipAnkle) / (2*lUpperLeg*lLowerLeg))
-        print 'KneePitch: ' + str(KneePitch)
         AnklePitch1 = np.arccos((lLowerLeg*lLowerLeg + lHipAnkle*lHipAnkle - lUpperLeg*lUpperLeg) / (2*lLowerLeg*lHipAnkle))
         c = cos(pi/4)
         s = sin(pi/4)
         vFootToHipOrthogonal = np.dot([[1,0,0],[0,c,-s],[0,s,c]], vFoot2Hip)
         AnklePitch2 = atan2(vFootToHipOrthogonal[0], norm(vFootToHipOrthogonal[1:3]))
         AnklePitch = AnklePitch1 + AnklePitch2
-        print 'AnklePitch: ' + str(AnklePitch)
         AnkleRoll = atan2(vFootToHipOrthogonal[1], vFootToHipOrthogonal[2])
-        print 'AnkleRoll: ' + str(AnkleRoll)
 
         mFoot2Thigh = self.local_trans('LKneePitch', KneePitch)\
             .dot(self.local_trans('LAnklePitch', AnklePitch))\
@@ -59,60 +56,38 @@ class InverseKinematicsAgent(ForwardKinematicsAgent):
         HipPitch = atan2(-M[2,0], M[0,0]) -pi
         HipRoll = atan2(-M[1,2], M[1,1])
 
-        self.print_matrix(mHip2Thigh, 'Hip2Thigh')
-        self.print_matrix(inv(mHip2Thigh), 'THigh2Hip')
-
-        print 'HipYawPitch: ' + str(HipYawPitch)
-        print 'HipPitch: ' + str(HipPitch)
-        print 'HipRoll: ' + str(HipRoll)
-
-
         joint_angles = [HipYawPitch, HipRoll, HipPitch, KneePitch, AnklePitch, AnkleRoll]
 
         return joint_angles
 
-    def rotationMatrixToEulerAngles(self, R):
-        sy = sqrt(R[0, 0] * R[0, 0] + R[1, 0] * R[1, 0])
-
-        if not sy < 1e-6:
-            x = atan2(R[2, 1], R[2, 2])
-            y = atan2(-R[2, 0], sy)
-            z = atan2(R[1, 0], R[0, 0])
-        else:
-            x = atan2(-R[1, 2], R[1, 1])
-            y = atan2(-R[2, 0], sy)
-            z = 0
-
-        return np.array([x, y, z])
-
-    def print_matrix(self, matrix, name):
-        angles = self.rotationMatrixToEulerAngles(matrix[0:3,0:3])
-        print '-- ' + name + ': ' + str(np.round(angles, 2)) + ' --'
-        print np.round(matrix, 2)
-        print '----------------------------------'
-
     def set_transforms(self, effector_name, transform):
         '''solve the inverse kinematics and control joints use the results
         '''
+        if (effector_name != "LLeg"):
+            return
+
         angles = self.inverse_kinematics(effector_name, transform)
 
-        #names.append("HeadYaw")
-        #times.append([1.00000, 2.00000, 2.80000, 3.60000, 4.30000, 4.80000, 5.60000, 6.50000, 7.40000, 8.00000, 8.60000,
-        #              10.50000])
-        #keys.append([[0.02459, [3, -0.33333, 0.00000], [3, 0.33333, 0.00000]],
-        #             [0.00000, [3, -0.33333, 0.01222], [3, 0.26667, -0.00977]],
-        #             [-0.04138, [3, -0.26667, 0.00000], [3, 0.26667, 0.00000]],
-        #             [-0.00000, [3, -0.26667, -0.00000], [3, 0.23333, 0.00000]],
-        #             [-0.00000, [3, -0.23333, -0.00000], [3, 0.16667, 0.00000]],
-        #             [-0.00000, [3, -0.16667, -0.00000], [3, 0.26667, 0.00000]],
-        #             [0.51393, [3, -0.26667, 0.00000], [3, 0.30000, 0.00000]],
-        #             [0.30224, [3, -0.30000, 0.12958], [3, 0.30000, -0.12958]],
-        #             [-0.26354, [3, -0.30000, 0.00000], [3, 0.20000, 0.00000]],
-        #             [-0.12043, [3, -0.20000, -0.04549], [3, 0.20000, 0.04549]],
-        #             [0.00940, [3, -0.20000, 0.00000], [3, 0.63333, 0.00000]],
-        #             [-0.06592, [3, -0.63333, 0.00000], [3, 0.00000, 0.00000]]])
+        names = list()
+        times = list()
+        keys = list()
+        for chain_name in self.chains:
+            if (chain_name == 'LLeg'):
+                i= 0
+                for joint_name in self.chains['LLeg']:
+                    names.append(joint_name)
+                    times.append([2.0])
+                    keys.append([[angles[i], [3, 0.00000, 0.00000], [3, 0.00000, 0.00000]]])
+                    i = i+1
+            else:
+                for joint_name in self.chains[chain_name]:
+                    names.append(joint_name)
+                    times.append([2.0])
+                    keys.append([[0, [3, 0.00000, 0.00000], [3, 0.00000, 0.00000]]])
 
-        self.keyframes = ([], [], [])  # the result joint angles have to fill in
+
+
+        self.keyframes = (names, times, keys)  # the result joint angles have to fill in
 
 if __name__ == '__main__':
     agent = InverseKinematicsAgent()
