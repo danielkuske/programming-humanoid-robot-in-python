@@ -21,7 +21,8 @@
 
 import numpy as np
 from pid import PIDAgent
-from keyframes import hello
+from keyframes import leftBellyToStand
+from keyframes import leftBackToStand
 
 
 class AngleInterpolationAgent(PIDAgent):
@@ -75,7 +76,7 @@ class AngleInterpolationAgent(PIDAgent):
                 bezierStartHandle =  np.add(bezierStart, (startHandleDTime, startHandleDAngle))
             else:
                 startHandleDTime = - endHandleDTime
-                startHandleDAngle = 0
+                startHandleDAngle = perception.joint[name]
                 bezierStart = (0, perception.joint[name])
                 bezierStartHandle = np.add(bezierStart, (startHandleDTime, startHandleDAngle))
 
@@ -127,5 +128,5 @@ class AngleInterpolationAgent(PIDAgent):
 
 if __name__ == '__main__':
     agent = AngleInterpolationAgent()
-    agent.keyframes = hello()  # CHANGE DIFFERENT KEYFRAMES
+    agent.keyframes = leftBackToStand()  # CHANGE DIFFERENT KEYFRAMES
     agent.run()
