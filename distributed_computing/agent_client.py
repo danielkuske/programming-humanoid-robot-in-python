@@ -7,60 +7,71 @@
 '''
 
 import weakref
+from SimpleXMLRPCServer import SimpleXMLRPCServer
+import xmlrpclib
+from agent_server import ServerAgent
+from threading import Thread
+from keyframes import leftBackToStand
 
 class PostHandler(object):
     '''the post hander wraps function to be excuted in paralle
     '''
+
     def __init__(self, obj):
+        self.obj = obj
         self.proxy = weakref.proxy(obj)
+
 
     def execute_keyframes(self, keyframes):
         '''non-blocking call of ClientAgent.execute_keyframes'''
-        # YOUR CODE HERE
+        Thread(target=self.obj.server.execute_keyframes, args=(keyframes))
 
     def set_transform(self, effector_name, transform):
         '''non-blocking call of ClientAgent.set_transform'''
-        # YOUR CODE HERE
+        Thread(target=self.obj.server.set_transform, args=(effector_name, transform))
 
 
 class ClientAgent(object):
     '''ClientAgent request RPC service from remote server
     '''
     # YOUR CODE HERE
+
     def __init__(self):
         self.post = PostHandler(self)
-    
+        #self.server = client.ServerProxy("http://localhost:8004/")
+        self.server = xmlrpclib.ServerProxy("http://0.0.0.0:9000/")
+        print(self.server)
+
+
     def get_angle(self, joint_name):
         '''get sensor value of given joint'''
-        # YOUR CODE HERE
-    
+        return self.server.get_angle(joint_name)
+
     def set_angle(self, joint_name, angle):
         '''set target angle of joint for PID controller
         '''
-        # YOUR CODE HERE
+        self.server.set_angle(joint_name, angle)
 
     def get_posture(self):
         '''return current posture of robot'''
-        # YOUR CODE HERE
+        return self.server.get_posture()
 
     def execute_keyframes(self, keyframes):
         '''excute keyframes, note this function is blocking call,
         e.g. return until keyframes are executed
         '''
-        # YOUR CODE HERE
+        self.server.execute_keyframes(keyframes)
 
     def get_transform(self, name):
         '''get transform with given name
         '''
-        # YOUR CODE HERE
+        return self.server.get_transform()
 
     def set_transform(self, effector_name, transform):
         '''solve the inverse kinematics and control joints use the results
         '''
-        # YOUR CODE HERE
+        self.post.set_transform(effector_name, transform)
 
 if __name__ == '__main__':
     agent = ClientAgent()
-    # TEST CODE HERE
-
-
+    agent.execute_keyframes(leftBackToStand())
