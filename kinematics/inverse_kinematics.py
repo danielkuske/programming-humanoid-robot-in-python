@@ -11,7 +11,7 @@
 
 
 from forward_kinematics import ForwardKinematicsAgent
-from numpy.matlib import identity, array
+from numpy.matlib import identity
 from numpy.linalg import norm, inv
 import numpy as np
 from math import cos, sin, atan2, pi, asin, sqrt, acos, asin

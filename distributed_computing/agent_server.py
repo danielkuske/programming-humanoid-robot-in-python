@@ -15,7 +15,8 @@
 import os
 import sys
 from SimpleXMLRPCServer import SimpleXMLRPCServer
-from threading import Thread
+import threading
+import numpy as np
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'kinematics'))
 
 from inverse_kinematics import InverseKinematicsAgent
@@ -26,16 +27,18 @@ class ServerAgent(InverseKinematicsAgent):
     '''
 
     def __init__(self):
+        print('Server wird aufgesetzt.')
         super(ServerAgent, self).__init__()
-        server = SimpleXMLRPCServer(('0.0.0.0', 9000))
-        print(server)
-        server.register_function(self.get_angle)
-        server.register_function(self.set_angle)
-        server.register_function(self.get_posture)
-        server.register_function(self.execute_keyframes)
-        server.register_function(self.get_transform)
-        server.register_function(self.set_transform)
-        Thread(target=server.serve_forever, args=())
+        self.server = SimpleXMLRPCServer(('0.0.0.0', 9000), allow_none=True)
+        self.server.register_function(self.get_angle)
+        self.server.register_function(self.set_angle)
+        self.server.register_function(self.get_posture)
+        self.server.register_function(self.execute_keyframes)
+        self.server.register_function(self.get_transform)
+        self.server.register_function(self.set_transform)
+        self.thread = threading.Thread(target=self.server.serve_forever, args=[])
+        self.thread.start()
+        print('Server wurde gestartet..')
 
     def get_angle(self, joint_name):
         '''get sensor value of given joint'''
@@ -48,12 +51,13 @@ class ServerAgent(InverseKinematicsAgent):
 
     def get_posture(self):
         '''return current posture of robot'''
-        return self.recognize_posture()
+        return self.posture
 
     def execute_keyframes(self, keyframes):
         '''excute keyframes, note this function is blocking call,
         e.g. return until keyframes are executed
         '''
+        self.start_time = -1
         self.keyframes= keyframes
 
     def get_transform(self, name):
@@ -64,7 +68,8 @@ class ServerAgent(InverseKinematicsAgent):
     def set_transform(self, effector_name, transform):
         '''solve the inverse kinematics and control joints use the results
         '''
-        self.set_transforms(effector_name, transform)
+        self.start_time = -1
+        self.set_transforms(effector_name, np.matrix(transform))
 
 if __name__ == '__main__':
     agent = ServerAgent()

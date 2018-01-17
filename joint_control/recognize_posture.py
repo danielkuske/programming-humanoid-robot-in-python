@@ -23,10 +23,10 @@ class PostureRecognitionAgent(AngleInterpolationAgent):
                  sync_mode=True):
         super(PostureRecognitionAgent, self).__init__(simspark_ip, simspark_port, teamname, player_id, sync_mode)
 
-        ROBOT_POSE_DATA_DIR = 'robot_pose_data'
+        ROBOT_POSE_DATA_DIR = '../joint_control/robot_pose_data'
         self.classes = listdir(ROBOT_POSE_DATA_DIR)
         self.posture = 'Stand'
-        self.posture_classifier = pickle.load(open('robot_pose.pkl'))  # LOAD YOUR CLASSIFIER
+        self.posture_classifier = pickle.load(open('../joint_control/robot_pose.pkl'))  # LOAD YOUR CLASSIFIER
 
     def think(self, perception):
         posture = self.recognize_posture(perception)

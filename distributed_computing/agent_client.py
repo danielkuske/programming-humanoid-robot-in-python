@@ -9,8 +9,11 @@
 import weakref
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 import xmlrpclib
+from numpy.matlib import identity
 from agent_server import ServerAgent
 from threading import Thread
+import threading
+import time
 from keyframes import leftBackToStand
 
 class PostHandler(object):
@@ -24,24 +27,25 @@ class PostHandler(object):
 
     def execute_keyframes(self, keyframes):
         '''non-blocking call of ClientAgent.execute_keyframes'''
-        Thread(target=self.obj.server.execute_keyframes, args=(keyframes))
+        self.obj.server.execute_keyframes(keyframes)
 
     def set_transform(self, effector_name, transform):
         '''non-blocking call of ClientAgent.set_transform'''
-        Thread(target=self.obj.server.set_transform, args=(effector_name, transform))
+        self.obj.server.set_transform(effector_name, transform)
+
+        #Thread(self.obj.server.set_transform(effector_name, transform)).start()
 
 
 class ClientAgent(object):
     '''ClientAgent request RPC service from remote server
     '''
+
     # YOUR CODE HERE
 
     def __init__(self):
         self.post = PostHandler(self)
-        #self.server = client.ServerProxy("http://localhost:8004/")
         self.server = xmlrpclib.ServerProxy("http://0.0.0.0:9000/")
         print(self.server)
-
 
     def get_angle(self, joint_name):
         '''get sensor value of given joint'''
@@ -60,18 +64,28 @@ class ClientAgent(object):
         '''excute keyframes, note this function is blocking call,
         e.g. return until keyframes are executed
         '''
-        self.server.execute_keyframes(keyframes)
+        self.post.execute_keyframes(keyframes)
 
     def get_transform(self, name):
         '''get transform with given name
         '''
-        return self.server.get_transform()
+        return self.server.get_transform(name)
 
     def set_transform(self, effector_name, transform):
         '''solve the inverse kinematics and control joints use the results
         '''
         self.post.set_transform(effector_name, transform)
 
+
 if __name__ == '__main__':
     agent = ClientAgent()
-    agent.execute_keyframes(leftBackToStand())
+    #agent.execute_keyframes(leftBackToStand())
+    #T = identity(4)
+    #T[-1, 1] = 0.05
+    #T[-1, 2] = 0.26
+    T=[[1,0,0,0],
+       [0,1,0,0.5],
+       [0,0,1,0.26],
+       [0,0,0,1]]
+    agent.set_transform('LLeg', T)
+    #agent.set_angle('LHipYawPitch', 1)
